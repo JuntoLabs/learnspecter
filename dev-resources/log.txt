@@ -1,0 +1,3 @@
+The production and local builds seem to conflict if you don't do it right. Do `lein package` and you'll be fine.
+Otherwise the JS console will print out that it can't connect to Figwheel — it thinks you're trying to
+run a local build.
