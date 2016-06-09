@@ -324,3 +324,29 @@ I figured it out! It was due to three problems:
 
 So now it works! Now the next thing to do is to build the UI for it.
 Committing.
+
+Sorry, haven't logged in a while. I'll fix that.
+I now have everything set up with re-frame, Sente, and Reagent. The view renders and 
+does not concern itself with the logic of what shape the data takes or event logic.
+Everything is relegated to the re-frame subs and handlers.
+
+The view is super simple:
+```
+(defn root []
+  [:div
+      [:div "Hello!"]
+      [:div [:div "Database is this:"]
+            [:div (pr-str @(subscribe [:db]))]]])
+```
+
+I have one small test dispatch which is run after the system is started:
+
+```
+(re/register-handler :test-ws-connectivity
+  (fn [db [_ send-fn]]
+    (send-fn [:event/name "Message"] 200 
+      (fn [e] (dispatch [:receive-message e])))
+    db))
+```
+
+Committing now.
