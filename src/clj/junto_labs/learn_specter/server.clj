@@ -2,7 +2,8 @@
   (:require
     [taoensso.timbre                         :as log      ]
     [com.stuartsierra.component              :as component]
-    [immutant.web                            :as imm      ]))
+    [immutant.web                            :as imm      ]
+    [org.httpkit.server                      :as kit      ]))
 
 (defrecord
   ^{:doc "A web server. Currently only the :immutant server @type is supported."}
@@ -13,7 +14,7 @@
     (start [this]
       (let [stop-fn-f (atom (fn []))]
         (try
-          (assert (contains? #{:immutant} type)) ; TODO use clojure.spec
+          (assert (contains? #{:immutant :http-kit} type)) ; TODO use clojure.spec
           (assert (var? routes-var))
 
           (let [opts {:host     (or host     "localhost")
@@ -23,16 +24,18 @@
                       (constantly (make-routes-fn (merge this opts)))))
                 _ (log/debug "Launching server with options:" (assoc opts :type type))
                 server (condp = type
-                         :immutant (imm/run routes-var opts))
+                         :immutant (imm/run        routes-var opts)
+                         :http-kit (kit/run-server routes-var opts))
                 _ (reset! stop-fn-f
                     (condp = type
-                      :immutant #(when server
-                                   (imm/stop server))))]
+                      :immutant #(when server (imm/stop server))
+                      :http-kit #(when server (server))))]
             (log/debug "Server launched.")
             (assoc this
               :ran     server
               :server  (condp = type
-                         :immutant (imm/server server))
+                         :immutant (imm/server server)
+                         :http-kit nil) ; Doesn't expose this
               :port    port
               :stop-fn @stop-fn-f))
         (catch Throwable e
@@ -41,8 +44,7 @@
           (throw e)))))
     (stop [this]
       (try
-        (condp = type
-          :immutant (stop-fn))
+        (stop-fn)
         (catch Throwable e
           (log/warn e)))
       (assoc this

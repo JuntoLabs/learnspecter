@@ -3,7 +3,8 @@
              [taoensso.sente                          :as ws       ]
              [taoensso.timbre                         :as log      ]
              [com.stuartsierra.component              :as component]
-     #?(:clj [taoensso.sente.server-adapters.immutant :as a-imm    ]))
+   #?@(:clj ([taoensso.sente.server-adapters.immutant :as a-imm    ]
+             [taoensso.sente.server-adapters.http-kit :as a-kit    ])))
   #?(:cljs (:require-macros
              [taoensso.timbre :as log])))
 
@@ -37,7 +38,8 @@
                 {:keys [chsk ch-recv send-fn state] :as socket}
                  (ws/make-channel-socket!
                    #?(:clj  (condp = (:type server)
-                              :immutant a-imm/sente-web-server-adapter)
+                              :immutant a-imm/sente-web-server-adapter
+                              :http-kit a-kit/sente-web-server-adapter)
                       :cljs endpoint)
                    {:type   (or type   :auto)
                     :packer packer
@@ -54,8 +56,8 @@
                         :get-fn         (:ajax-get-or-ws-handshake-fn socket)
                         :connected-uids (:connected-uids              socket))]
             #?(:clj (alter-var-root (:routes-var server)
-                      (constantly (make-routes-fn (merge this' server)))))
-            (log/debug "Channel-socket started.")
+                      (constantly (make-routes-fn (merge this' server {:ws-uri endpoint})))))
+            (log/debug "Channel-socket started with" this' ".")
             this')
           (catch #?(:clj Throwable :cljs js/Error) e
             (log/warn "Error in ChannelSocket:" e)
