@@ -9,8 +9,8 @@
 
 (def config
   {:websockets {:endpoint    "/chan"
-                :host        "0.0.0.0"
-                :port        32000
+                :host        "localhost"
+                :port        8080
                 :msg-handler handlers/event-msg-handler*}})
 
 (defonce system-map
@@ -22,8 +22,14 @@
 
 (defn -main []
   (log/debug "System stopping if running...")
-  (swap! system component/stop )`
+  (swap! system component/stop )
   (swap! system component/start)
   (log/debug "System started."))
 
+(defn tests []
+  (println "SYSTEM KEYS" (-> @system :websockets))
+  ((-> @system :websockets :send-fn) [:event/name "Message"] 200 
+    (fn [e] (log/debug "Thanks for calling back with this!" e))))
+
 (-main)
+(tests)
