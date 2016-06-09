@@ -7,4 +7,4 @@
 (def state-0 {:messages []
               :dom      {}})
 
-(dispatch [:reset state-0])
+(defonce init-state! (dispatch [:reset state-0]))

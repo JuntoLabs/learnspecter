@@ -2,6 +2,7 @@
   (:require [re-frame.core :as re
               :refer [subscribe dispatch]]
             [reagent.core  :as rx]
+            [junto-labs.learn-specter.utils  :as u ]
             [junto-labs.learn-specter.events :as ev]
             [junto-labs.learn-specter.components :as comp]))
 
@@ -16,17 +17,17 @@
         @editable])))
 
 (defn pr-database []
-  (comp/pr-table @(subscribe [:db])))
+  [:div (u/ppr-str @(subscribe [:db]))]
+  #_(comp/pr-table @(subscribe [:db])))
 
 (defn root []
   [:div#inner-root.vbox
     [:h1 "Welcome to the REPL!"]
     [:div#container.hbox
       [:div#repl.vbox
-        [:h2 "REPL"]
-        [editable-component :div1 "Editable1"]]
-      [:div#evaled.vbox
-        [:h2 "Evaled"]
-        [editable-component :div2 "Editable2"]]]
+        [:table
+          [:tr [:th [:h2 "REPL"]] [:th [:h2 "Evaled"]]]
+          [:tr [:td [editable-component :repl.line ">"]]
+               [:td [editable-component :evaled    ""]]]]]]
     [:div [:h2 "Database"]
           [pr-database]]])

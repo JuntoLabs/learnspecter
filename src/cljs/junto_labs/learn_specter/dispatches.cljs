@@ -29,15 +29,43 @@
       (fn [e] (dispatch [:receive-message e])))
     db))
 
+(re/register-handler :dom
+  (fn [db [_ id v]]
+    (assoc-in db [:dom id] v)))
+
+(re/register-handler :eval
+  (fn [db [_ id]]
+    (assoc-in db [:dom id] "Evaled!")))
+
+
+(def dispatch-map ; if it returns truthy, it continues with default
+  {:repl.line (fn [e] (if (-> e :keys :key (= :enter))
+                          (do (log/debug "Enter pressed!")
+                              (dispatch [:eval :evaled])
+                              (dispatch [:add-line]))
+                          true))})
+
+; ===== USER INTERACTION EVENTS =====
+
+(defn key-down-default
+  [db e focused]
+  (let [k         (-> e :keys :key)
+        update-fn (if (or (= k :backspace)
+                          (= k :delete   ))
+                      #(u/pop-str %)
+                      #(str % (-> e :keys :key-str)))]
+    (update-in db [:dom focused] update-fn)))
+
 (re/register-handler :key-down
   (fn [db [_ e]]
     (log/debug "Key down!" (:keys e))
-    (let [k (-> e :keys :key)
-          update-fn (if (or (= k :backspace)
-                            (= k :delete   ))
-                        #(u/pop-str %)
-                        #(str % (-> e :keys :key-str)))]
-      (update-in db [:dom @(subscribe [:focused])] update-fn))))
+    (let [focused @(subscribe [:focused])]
+      (if-let [handler (get dispatch-map focused)]
+        (if (handler e)
+            (key-down-default db e focused)
+            db)
+        (do (log/debug "No handler found for" focused)
+            (key-down-default db e focused))))))
 
 (re/register-handler :click
   (fn [db [_ e]]
@@ -48,7 +76,3 @@
   (fn [db [_ id]]
     (log/debug "Focusing" id)
     (assoc db :focused id)))
-
-(re/register-handler :dom
-  (fn [db [_ id v]]
-    (assoc-in db [:dom id] v)))

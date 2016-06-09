@@ -16,9 +16,12 @@
   "Gets the key from a key event."
   {:possible-output `{:key :enter, :modifiers #{:alt}}}
   [e]
-  (let [n (or (.-keyCode e) (.-which e))]
-    {:key     (get num->key n n)
-     :key-str (.-key e)
+  (let [n (or (.-keyCode e) (.-which e))
+        k (get num->key n n)]
+    {:key     k
+     :key-str (condp = k
+                :enter \newline
+                (.-key e))
      :modifiers (disj (hash-set (when (.-altKey e) :alt)) nil)}))
 
 (defn capture

@@ -456,3 +456,8 @@ Now I have a pprint-table component which prints essentially a tree :D It's real
 useful and helpful for seeing what's going on in the db.
 
 Committing.
+
+What if we started out with a table for the repl? Let's try it.
+It's working so far with the evaluation on the right and the original on the left.
+
+Committing.
