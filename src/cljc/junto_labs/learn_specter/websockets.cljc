@@ -19,10 +19,7 @@
           @packer     : Client<->server serialization format"
     :usage '(map->ChannelSocket {:uri         "/chan"
                                  :packer      :edn
-                                 :msg-handler my-msg-handler})
-    :todo ["The recommended version supported in latest versions of all
-            current browsers is RFC 6455 (supported by Firefox 11+, Chrome 16+,
-            Safari 6, Opera 12.50, and IE10). Don't use previous versions."]}
+                                 :msg-handler my-msg-handler})}
   ChannelSocket
   [uri host chan chan-recv send-fn chan-state type server-type packer
    stop-fn ajax-post-fn ajax-get-or-ws-handshake-fn msg-handler
@@ -46,7 +43,7 @@
                              :immutant a-imm/sente-web-server-adapter)
                       :cljs uri)
                    {:type   (or type :auto)
-                    :packer packer
+                    :packer (or packer :edn)
                     #?@(:cljs
                     [:host host])})
                 _ (reset! stop-fn-f (ws/start-chsk-router! ch-recv msg-handler))]

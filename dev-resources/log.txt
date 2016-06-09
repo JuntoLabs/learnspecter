@@ -97,4 +97,120 @@ All right, we've got the Websocket component set up for CLJ and CLJS. It abstrac
 the details laid out in the Sente tutorials so we don't even have to think about them
 and we can just treat the websocket like any other component.
 
+The code is long here because 1) usage documentation, 2) assertions, and 3) lots of
+`defrecord` fields. Thus, this is not complected and can't be split apart into more
+fundamental pieces, sadly.
+```
+(defrecord 
+  ^{:doc "A WebSocket-channel abstraction of Sente's functionality.
+
+          Creates a Sente WebSocket channel and Sente WebSocket channel
+          message router.
+
+          @chan-recv  : ChannelSocket's receive channel
+          @chan-send! : ChannelSocket's send API fn
+          @chan-state : Watchable, read-only atom
+          @packer     : Client<->server serialization format"
+    :usage '(map->ChannelSocket {:uri         "/chan"
+                                 :packer      :edn
+                                 :msg-handler my-msg-handler})}
+  ChannelSocket
+  [uri host chan chan-recv send-fn chan-state type server-type packer
+   stop-fn ajax-post-fn ajax-get-or-ws-handshake-fn msg-handler
+   connected-uids]
+  component/Lifecycle
+    (start [this]
+      (let [stop-fn-f (atom (fn []))]
+        (try
+          (log/debug "Starting channel-socket with:" this)
+           ; TODO for all these assertions, use clojure.spec!
+          (assert (string? uri) #{uri})
+          (assert (fn? msg-handler))
+          (assert (or (nil? type) (contains? #{:auto :ajax :ws} type)))
+        #?(:clj 
+          (assert (contains? #{:immutant})))
+          (assert (keyword? packer))
+
+          (let [{:keys [chsk ch-recv send-fn state] :as socket}
+                 (ws/make-channel-socket!
+                   #?(:clj (condp = server-type
+                             :immutant a-imm/sente-web-server-adapter)
+                      :cljs uri)
+                   {:type   (or type :auto)
+                    :packer (or packer :edn)
+                    #?@(:cljs
+                    [:host host])})
+                _ (reset! stop-fn-f (ws/start-chsk-router! ch-recv msg-handler))]
+            (log/debug "Channel-socket started.")
+            (assoc this
+              :chan                        chsk
+              :chan-recv                   ch-recv
+              :send-fn                     send-fn
+              :chan-state                  state
+              :stop-fn                     @stop-fn-f
+              :ajax-post-fn                (:ajax-post-fn                socket)
+              :ajax-get-or-ws-handshake-fn (:ajax-get-or-ws-handshake-fn socket)
+              :connected-uids              (:connected-uids              socket)))
+          (catch #?(:clj Throwable :cljs js/Error) e
+            (log/warn "Error in ChannelSocket:" e)
+            (@stop-fn-f)
+            (throw e)))))
+    (stop [this]
+      (try (when stop-fn (stop-fn))
+        (catch #?(:clj Throwable :cljs js/Error) e
+          (log/warn "Error in ChannelSocket:" e)))
+      ; TODO should assoc other vals as nil?
+      this))
+```
+
+Committing.
+
+Next step is to get the Immutant server in a component. Should be simple — I have
+a template in Quantum from which I will extract as little as possible.
+
+All right, here's the server component:
+
+```
+#?(:clj
+(defrecord
+  ^{:doc "A web server. Currently only the :immutant server @type is supported."}
+  Server
+  [routes server type host port ssl-port stop-fn ran]
+  component/Lifecycle
+    (start [this]
+      (let [stop-fn-f (atom (fn []))]
+        (try
+          (assert (contains? #{:immutant} type)) ; TODO use clojure.spec
+
+          (let [opts {:host     (or host     "localhost")
+                      :port     (or port     80)
+                      :ssl-port (or ssl-port 443)}
+                _ (log/debug "Launching server with options:" (assoc opts :type type))
+                server (condp = type
+                         :immutant (imm/run routes opts))
+                _ (reset! stop-fn-f
+                    (condp = type
+                      :immutant #(when server
+                                   (imm/stop server))))]
+            (log/debug "Server launched.")
+            (assoc this
+              :ran     server
+              :server  (condp = type
+                         :immutant (imm/server server))
+              :port    port
+              :stop-fn @stop-fn-f))
+        (catch Throwable e
+          (log/warn e)
+          (@stop-fn-f)
+          (throw e)))))
+    (stop [this]
+      (try
+        (condp = type
+          :immutant (stop-fn))
+        (catch Throwable e
+          (log/warn e)))
+      (assoc this
+        :stop-fn nil))))
+```
+
 Committing.
