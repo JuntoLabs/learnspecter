@@ -33,18 +33,18 @@
 (defn make-base-routes
   [opts]
   (wrap-middleware
-    (apply routes (base-routes opts))))
+    (apply route/routes (base-routes opts))))
 
 (defn ws-routes
   [{:keys [ws-uri get-fn post-fn]}]
-  (assert (fn? get-fn)) ; TODO use clojure.spec
+  (assert (fn? get-fn )) ; TODO use clojure.spec
   (assert (fn? post-fn))
-  [(GET  ws-uri req (get-f  req))
-   (POST ws-uri req (post-f req))])
+  [(GET  ws-uri req (get-fn  req))
+   (POST ws-uri req (post-fn req))])
 
 (defn make-routes 
   [opts]
   (wrap-middleware
-    (apply routes (concat (base-routes opts) (ws-routes opts)))))
+    (apply route/routes (concat (base-routes opts) (ws-routes opts)))))
 
 (def routes nil) ; just a var which will be modified by Server component

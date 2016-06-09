@@ -4,7 +4,6 @@
     [com.stuartsierra.component              :as component]
     [immutant.web                            :as imm      ]))
 
-#?(:clj
 (defrecord
   ^{:doc "A web server. Currently only the :immutant server @type is supported."}
   Server
@@ -18,8 +17,7 @@
           (assert (var? routes-var))
 
           (let [opts {:host     (or host     "localhost")
-                      :port     (or port     80)
-                      :ssl-port (or ssl-port 443)}
+                      :port     (or port     80)}
                 _ (when make-routes-fn ; sets up routes
                     (alter-var-root routes-var
                       (constantly (make-routes-fn (merge this opts)))))
@@ -48,4 +46,4 @@
         (catch Throwable e
           (log/warn e)))
       (assoc this
-        :stop-fn nil))))
+        :stop-fn nil)))

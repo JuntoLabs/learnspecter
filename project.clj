@@ -20,14 +20,8 @@
      [com.taoensso/timbre                       "4.3.1"           ]
      ; ==== RESOURCES ====
      [com.stuartsierra/component                "0.3.1"           ]
-     [clj-http                                  "3.1.0"
-       :exclusions [org.json/json
-                    com.fasterxml.jackson.core/jackson-core
-                    commons-codec
-                    potemkin]                                     ]
-     [compojure                                 "1.5.0"
-       :exclusions [clj-http]                                     ]
-     [aleph                                     "0.4.1"           ]
+     [compojure                                 "1.5.0"           ]
+     [org.immutant/web                          "2.1.4"           ]
      ; ==== AUTH ====  
      [ring/ring-defaults                        "0.2.0"           ]
      [bk/ring-gzip                              "0.1.1"           ]]

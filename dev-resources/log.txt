@@ -270,3 +270,25 @@ Also, I made the routes cleaner. There's no more atoms in there — only the rou
 is "impure".
 
 Committing.
+
+All right, let's hook up the cleaned up routes to the components.
+
+Ah. There's apparently a way in Component to pass in the dependent component maps.
+The WebSocket component needs the Server component, so that's helpful. I needed that
+in order to pass the necessary config into the make-routes functions.
+
+Okay, they're all hooked up! Let's test it all together.
+
+Success! Everything compiles as expected. Running the system now.
+
+Failed on trying to bind to port 80 because wasn't in sudo mode. Let's not use port 80
+and use 8080 instead (ports below a certain range can't be bound unless in sudo mode).
+
+Hmm... keeps failing on binding port even at port 32000 (significantly higher than 80
+or even 8080). Maybe it's because it thinks I want an SSL port? Testing.
+
+Yup! That was it. Now there's an assertion failed for `(fn? msg-handler)`.
+Fixed it — I had coded something slightly wrong in junto-labs.learn-specter.websockets
+so I was calling the route creators twice with different arguments.
+
+Now the server side works! Committing.
