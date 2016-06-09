@@ -10,30 +10,10 @@
             [com.stuartsierra.component       :as component]
             [junto-labs.learn-specter.utils   :as u        ]))
 
-(def sys-map (lens res/systems (fn-> :global :sys-map qcore/deref*)))
-
-(def ring-ajax-get-or-ws-handshake (lens sys-map (fn-> :connection :ajax-get-or-ws-handshake-fn)))
-(def ring-ajax-post                (lens sys-map (fn-> :connection :ajax-post-fn)))
-
-(def server-root (u/->path (System/getProperty "user.dir") "/dev-resources/public")) ; TODO use config map for this
-
-(def main-page #(slurp (u/->path server-root "index.html")))
+(defn main-page [server-root-path]
+  (slurp (u/->path server-root-path "index.html")))
 
 (def not-found-page "<h1>Page not found. Sorry!</h1>")
-
-(def chan-uri "/chan")
-
-(defroutes routes*
-  (GET "/"        req (fn [req]
-                        {:headers {"Content-Type" "text/html"}
-                         :body    (main-page)})) ; TODO make so it intelligently caches
-  (GET  chan-uri  req (let [get-f @ring-ajax-get-or-ws-handshake]
-                        (assert (nnil? get-f))
-                        (get-f req)))
-  (POST chan-uri  req (let [post-f @ring-ajax-post]
-                        (assert (nnil? post-f))
-                        (post-f req)))
-  (not-found not-found-page))
 
 (defn wrap-middleware [routes]
   (-> routes
@@ -43,4 +23,28 @@
             (assoc-in [:static   :resources   ] false)
             (assoc-in [:static   :files       ] false)))))
 
-(defroutes routes (wrap-middleware routes*))
+(defn base-routes
+  [{:keys [root-path]}]
+  [(GET "/" req (fn [req]
+                  {:headers {"Content-Type" "text/html"}
+                   :body    (main-page root-path)})) ; TODO make so it intelligently caches
+   (not-found not-found-page)])
+
+(defn make-base-routes
+  [opts]
+  (wrap-middleware
+    (apply routes (base-routes opts))))
+
+(defn ws-routes
+  [{:keys [ws-uri get-fn post-fn]}]
+  (assert (fn? get-fn)) ; TODO use clojure.spec
+  (assert (fn? post-fn))
+  [(GET  ws-uri req (get-f  req))
+   (POST ws-uri req (post-f req))])
+
+(defn make-routes 
+  [opts]
+  (wrap-middleware
+    (apply routes (concat (base-routes opts) (ws-routes opts)))))
+
+(def routes nil) ; just a var which will be modified by Server component

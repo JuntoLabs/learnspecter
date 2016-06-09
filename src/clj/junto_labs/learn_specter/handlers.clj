@@ -1,7 +1,6 @@
 (ns junto-labs.learn-specter.handlers)
 
 (defmulti event-msg-handler :id) ; Dispatch on event-id
-(def send-msg! (lens res/systems (fn-> :global :sys-map deref* :connection :send-fn)))
 
 ; Wrap for logging, catching, etc.:
 (defn event-msg-handler* [{:as ev-msg :keys [id ?data event]}]

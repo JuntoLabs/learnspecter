@@ -1,4 +1,4 @@
-(ns junto-labs.learn-specter.websockets
+(ns junto-labs.learn-specter.server
   (:require
     [taoensso.timbre                         :as log      ]
     [com.stuartsierra.component              :as component]
@@ -8,19 +8,24 @@
 (defrecord
   ^{:doc "A web server. Currently only the :immutant server @type is supported."}
   Server
-  [routes server type host port ssl-port stop-fn ran]
+  [routes-var make-routes-fn server type host port ssl-port stop-fn ran
+   root-path ws-uri]
   component/Lifecycle
     (start [this]
       (let [stop-fn-f (atom (fn []))]
         (try
           (assert (contains? #{:immutant} type)) ; TODO use clojure.spec
+          (assert (var? routes-var))
 
           (let [opts {:host     (or host     "localhost")
                       :port     (or port     80)
                       :ssl-port (or ssl-port 443)}
+                _ (when make-routes-fn ; sets up routes
+                    (alter-var-root routes-var
+                      (constantly (make-routes-fn (merge this opts)))))
                 _ (log/debug "Launching server with options:" (assoc opts :type type))
                 server (condp = type
-                         :immutant (imm/run routes opts))
+                         :immutant (imm/run routes-var opts))
                 _ (reset! stop-fn-f
                     (condp = type
                       :immutant #(when server

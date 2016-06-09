@@ -214,3 +214,59 @@ All right, here's the server component:
 ```
 
 Committing.
+
+Next step is to get a Component system going and test it with real inputs.
+I'm just going to do the minimum inputs required for it.
+
+So this looks pretty simple:
+```
+(def config
+  (let [host        "localhost"
+        port        80
+        server-type :immutant]
+    {:server     {:type   server-type
+                  :routes #'routes/routes
+                  :host   host
+                  :port   port}
+     :websockets {:uri         "/chan" ; TODO add this to routes
+                  :host        (str host ":" port)
+                  :server-type server-type
+                  :msg-handler handlers/event-msg-handler}}))
+```
+
+And this is the system for it:
+```
+(defonce system
+  (component/system-map
+    {:server     (server/map->Server (:server config))
+     :websockets (component/using 
+                   (ws/map->ChannelSocket (:websockets config))
+                   [:server])}))
+```
+(I didn't put in logging config yet, but that's not super important.)
+
+Next step is to integration test and see how it works all together.
+
+Oh — almost forgot. It would be nice to componentize the routes, because 1) one route
+(the "/chan" route) requires input from a config source (junto-labs.learn-specter.system)
+and the `server-root` for serving up the index.html requires the same thing. I've never]
+seen routes componentized but it seems like it could be a good idea so let's do it.
+
+Actually, let's not componentize because there's no actual lifecycle to routes; let's
+parameterize. That is, create the routes in a function which takes certain necessary
+params such as `chan-uri` and `server-root`.
+
+Added this important piece to the server component:
+
+```
+(when make-routes-fn
+  (alter-var-root routes-var (constantly (make-routes-fn this))))
+```
+
+It sets up the routes according to the `make-routes-fn` passed to the component, and
+passes to the fn the map of its key-value pairs.
+
+Also, I made the routes cleaner. There's no more atoms in there — only the routes var
+is "impure".
+
+Committing.
