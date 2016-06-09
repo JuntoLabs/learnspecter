@@ -1,7 +1,7 @@
 (ns junto-labs.learn-specter.dispatches
   (:require
     [re-frame.core      :as re
-      :refer [dispatch]]
+      :refer [dispatch subscribe]]
     [taoensso.timbre])
   (:require-macros
     [taoensso.timbre    :as log]))
@@ -20,3 +20,22 @@
     (send-fn [:event/name "Message"] 200 
       (fn [e] (dispatch [:receive-message e])))
     db))
+
+(re/register-handler :key-down
+  (fn [db [_ e]]
+    (log/debug "Key down!" (:keys e))
+    (update-in db [:dom @(subscribe [:focused])] #(str % (-> e :keys :key-str)))))
+
+(re/register-handler :click
+  (fn [db [_ e]]
+    (log/debug "Click!" e)
+    db))
+
+(re/register-handler :focus
+  (fn [db [_ id]]
+    (log/debug "Focusing" id)
+    (assoc db :focused id)))
+
+(re/register-handler :dom
+  (fn [db [_ id v]]
+    (assoc-in db [:dom id] v)))

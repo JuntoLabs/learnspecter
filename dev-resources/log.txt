@@ -394,3 +394,25 @@ That way we can use modifiers and such as needed.
 
 Oh, and the dynamic CSS would be nice too, for purposes of vbox, hbox, and such.
 Let's pull in that.
+Committing.
+
+Now that that's done, how do we make it so when we click on a DOM element, that's
+the element that gets the "focus" and then responds to inputs accordingly?
+One idea is to:
+- Have a key listener attached to the entire body
+- On click of focusable elements, store the in-focus-element's ID
+- Whenever a key is pressed, a re-frame dispatch is made to the focused ID's handler,
+which changes its value accordingly.
+Let's do that.
+
+Also, one thing we need to do is "capture" events. That is, we need to prevent
+them from being garbage-collected when they're passed out of an event handler.
+Let's write that function and keep it simple.
+
+All right, it's done. Let's move on to implementing what we talked about up above.
+
+Yay! We have our editable div without resorting to labeling it as "editable" or some
+such hacky thing. Also we've avoid textareas and inputs entirely. Now, as to whether
+this is a good idea, time will tell — but for now it looks like we're in the clear.
+
+Committing.
