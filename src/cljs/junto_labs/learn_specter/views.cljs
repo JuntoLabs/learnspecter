@@ -5,7 +5,7 @@
 
 (defn root []
   [:div
-      [:div "Hello!"]
-      [:div [:div "Database is this:"]
-            [:div (pr-str @(subscribe [:db]))]]])
+    [:div "Hello!"]
+    [:div [:div "Database is this:"]
+          [:div (pr-str @(subscribe [:db]))]]])
 

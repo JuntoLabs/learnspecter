@@ -13,6 +13,8 @@
      [org.clojure/tools.namespace               "0.2.11"      ]
      [org.clojure/core.async                    "0.2.374"     ]
      [re-frame                                  "0.7.0"       ]
+     ; ==== VIEW ====
+     [garden                                    "1.3.2"       ]
      [reagent                                   "0.5.1"
        :exclusions [org.json/json]                            ]
      [com.taoensso/sente                        "1.8.1"       ]
