@@ -24,30 +24,42 @@
     (update db :messages conj e)))
 
 (re/register-handler :test-ws-connectivity
-  (fn [db [_ send-fn]]
-    (send-fn [:event/name "Message"] 200 
+  (fn [db _]
+    ((get db :ws-fn) [:event/name "Message"] 200 
       (fn [e] (dispatch [:receive-message e])))
     db))
+
+(re/register-handler :set-ws-fn
+  (fn [db [_ f]]
+    (assoc db :ws-fn f)))
 
 (re/register-handler :dom
   (fn [db [_ id v]]
     (assoc-in db [:dom id] v)))
 
-(re/register-handler :eval
-  (fn [db [_ id]]
-    (assoc-in db [:dom id] "Evaled!")))
+(defn eval-on-server! [db x to-id]
+  ((get db :ws-fn) [:str/eval x] 5000
+    (fn [evaled]
+      (log/debug "Evaled on server!" evaled)
+      (dispatch [:dom to-id evaled]))))
 
+(re/register-handler :eval
+  (fn [db [_ from-id to-id]]
+    (eval-on-server! db
+      @(subscribe [:dom from-id])
+      to-id)
+    (assoc-in db [:dom to-id] "Evaling...")))
 
 (def dispatch-map ; if it returns truthy, it continues with default
   {:repl.line (fn [e] (if (-> e :keys :key (= :enter))
                           (do (log/debug "Enter pressed!")
-                              (dispatch [:eval :evaled])
+                              (dispatch [:eval :repl.line :evaled])
                               (dispatch [:add-line]))
                           true))})
 
 ; ===== USER INTERACTION EVENTS =====
 
-(defn key-down-default
+(defn key-down-default ; is to append
   [db e focused]
   (let [k         (-> e :keys :key)
         update-fn (if (or (= k :backspace)

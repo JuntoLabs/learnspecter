@@ -461,3 +461,15 @@ What if we started out with a table for the repl? Let's try it.
 It's working so far with the evaluation on the right and the original on the left.
 
 Committing.
+
+Next step, before getting multiple REPL lines working, is to get eval working on
+the server.
+
+For this, I envision a Sente handler on the server which gets a :str/eval message.
+The server then evaluates it and sends the pretty-printed string back.
+Let's do it.
+
+We have a REPL now! Added the handler on the server, caught and printed exceptions,
+and it looks pretty decent!
+
+Committing.

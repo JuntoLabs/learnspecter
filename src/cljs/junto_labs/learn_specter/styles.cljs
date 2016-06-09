@@ -16,6 +16,7 @@
         hbox (merge hbox-base
                #_(vorient :v :center))]
     [[:* {:font-family "Helvetica Neue"}]
+     [:pre {:font-family "Courier"}]
      [:.vbox         vbox]
      [:.hbox         hbox]
      [:.hbox.hcenter (merge hbox (horient :h :center))]

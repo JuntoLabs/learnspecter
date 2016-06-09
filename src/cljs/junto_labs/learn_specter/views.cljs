@@ -6,12 +6,12 @@
             [junto-labs.learn-specter.events :as ev]
             [junto-labs.learn-specter.components :as comp]))
 
-(defn editable-component [id v-0]
+(defn editable-component [tag id v-0]
   (let [editable (subscribe [:dom id])
         focused? (subscribe [:focused? id])
         _ (dispatch [:dom id v-0])] ; Set initial value
     (fn []
-      [:div
+      [tag
         {:id id
          :on-click #(dispatch [:focus id])}
         @editable])))
@@ -26,8 +26,9 @@
     [:div#container.hbox
       [:div#repl.vbox
         [:table
-          [:tr [:th [:h2 "REPL"]] [:th [:h2 "Evaled"]]]
-          [:tr [:td [editable-component :repl.line ">"]]
-               [:td [editable-component :evaled    ""]]]]]]
-    [:div [:h2 "Database"]
+          [:tr [:th] [:th [:h2 "REPL"]] [:th [:h2 "Evaled"]]]
+          [:tr [:td [:pre ">"]]
+               [:td [editable-component :pre :repl.line ""]]
+               [:td [editable-component :pre :evaled    ""]]]]]]
+   #_[:div [:div [:h2 "Database"]] ; TODO hide button
           [pr-database]]])
