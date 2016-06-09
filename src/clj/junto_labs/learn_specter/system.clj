@@ -1,14 +1,14 @@
 (ns junto-labs.learn-specter.system
   (:require
-    [taoensso.timbre                     :as log      ]
-    [com.stuartsierra.component          :as component]
-    [junto-labs.learn-specter.routes     :as routes   ]
-    [junto-labs.learn-specter.handlers   :as handlers ]
-    [junto-labs.learn-specter.websockets :as ws       ]
-    [junto-labs.learn-specter.server     :as server   ]
-    [junto-labs.learn-specter.utils      :as u        ]
+    [taoensso.timbre                      :as log      ]
+    [com.stuartsierra.component           :as component]
+    [junto-labs.learn-specter.routes      :as routes   ]
+    [junto-labs.learn-specter.handlers    :as handlers ]
+    [junto-labs.learn-specter.websockets  :as ws       ]
+    [junto-labs.learn-specter.server      :as server   ]
+    [junto-labs.learn-specter.utils       :as u        ]
     [environ.core
-      :refer [env]                                    ]))
+      :refer [env]                                     ]))
 
 (def config
   {:server     {:type           :immutant
