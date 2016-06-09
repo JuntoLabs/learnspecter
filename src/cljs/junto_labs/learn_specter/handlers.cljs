@@ -12,7 +12,17 @@
   (let [session (:session ring-req)
         uid     (:uid     session)]
     (log/warn "Unhandled event:" ev-msg "from" uid)
-    (log/warn "Responding" "reply-fn?" ?reply-fn)
-  
+    
     (when ?reply-fn
       (?reply-fn {:unhandled-event event}))))
+
+(defmethod event-msg-handler :chsk/handshake
+  [_]
+  (log/debug "Websocket handshake completed."))
+
+(defmethod event-msg-handler :chsk/state
+  [e]
+  (if (:first-open? e)
+      (log/debug "Socket first open.")
+      (log/debug "State change in socket:" e)))
+

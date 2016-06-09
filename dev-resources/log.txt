@@ -309,3 +309,18 @@ Let's use the system namespace with it.
 So at very least we have a system which is *supposed* to connect to the socket, even
 though it doesn't quite.
 Committing now.
+
+What could be the problem with the system? 
+At least we know the Websocket is being half-successful in connecting, because when
+we shut down the server, it says "net::ERR_CONNECTION_REFUSED". But it says "Chsk is
+closed: will try reconnect (9)". How do we fix that?
+
+I figured it out! It was due to three problems:
+1) The Ring middleware was using a secure setup, which meant it auto-redirected to
+   HTTPS, which was not available
+2) The channel URI/endpoint was not being passed to the `make-routes` function
+3) In building the routes, the `not-found` route was put before the websocket routes.
+   Strangely, order matters when it comes to routes, like a `cond`.
+
+So now it works! Now the next thing to do is to build the UI for it.
+Committing.
