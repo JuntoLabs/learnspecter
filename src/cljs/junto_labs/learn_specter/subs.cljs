@@ -11,6 +11,9 @@
 (re/register-sub :focused
   (fn [db _] (reaction (get @db :focused))))
 
+(re/register-sub :focused?
+  (fn [db [_ id]] (reaction (= (get @db :focused) id))))
+
 (re/register-sub :dom
   (fn [db [_ id]]
     (reaction (get-in @db [:dom id]))))

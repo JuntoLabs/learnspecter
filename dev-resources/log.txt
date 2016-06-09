@@ -416,3 +416,7 @@ such hacky thing. Also we've avoid textareas and inputs entirely. Now, as to whe
 this is a good idea, time will tell — but for now it looks like we're in the clear.
 
 Committing.
+
+Now we have multiple editable areas! Cool. This editable-component is reusable.
+
+Committing.

@@ -7,17 +7,21 @@
 (set! (-> js/document .-body .-onkeydown)
   #(dispatch [:key-down (ev/capture %)]))
 
-(defn editable-component []
-  (let [editable (subscribe [:dom :editable])
-        _ (dispatch [:dom :editable "Editable"])]
+(defn editable-component [id v-0]
+  (let [editable (subscribe [:dom id])
+        focused? (subscribe [:focused? id])
+        _ (dispatch [:dom id v-0])] ; Set initial value
     (fn []
-      [:div#editable
-        {:on-click #(dispatch [:focus :editable])}
-        @editable])))
+      [:div
+        {:id id
+         :on-click #(dispatch [:focus id])}
+        @editable
+        [:div (str "- Focused? " @focused?)]])))
 
 (defn root []
   [:div
     [:div "Hello!"]
-    [editable-component]
+    [editable-component :div1 "Editable1"]
+    [editable-component :div2 "Editable2"]
     [:div [:div "Database is this:"]
           [:div (pr-str @(subscribe [:db]))]]])
