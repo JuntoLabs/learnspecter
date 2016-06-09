@@ -301,3 +301,11 @@ My computer froze for about 10 minutes... *sigh*... not a problem with Figwheel,
 with how much stuff I was running. I'm back now.
 
 Yay! Figwheel works. Committing now.
+
+All right, so the next step is to get Sente working. Luckily, the Websocket component
+we built is CLJC, so we can use it without any additional code.
+Let's use the system namespace with it.
+
+So at very least we have a system which is *supposed* to connect to the socket, even
+though it doesn't quite.
+Committing now.
