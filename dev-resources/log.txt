@@ -292,3 +292,61 @@ Fixed it — I had coded something slightly wrong in junto-labs.learn-specter.we
 so I was calling the route creators twice with different arguments.
 
 Now the server side works! Committing.
+
+Moving on to the client now.
+I'm going to develop in Figwheel so I know what the problems are along the way. Let me
+create a main namespace — system.cljs — and start Figwheel.
+
+My computer froze for about 10 minutes... *sigh*... not a problem with Figwheel, but
+with how much stuff I was running. I'm back now.
+
+Yay! Figwheel works. Committing now.
+
+All right, so the next step is to get Sente working. Luckily, the Websocket component
+we built is CLJC, so we can use it without any additional code.
+Let's use the system namespace with it.
+
+So at very least we have a system which is *supposed* to connect to the socket, even
+though it doesn't quite.
+Committing now.
+
+What could be the problem with the system? 
+At least we know the Websocket is being half-successful in connecting, because when
+we shut down the server, it says "net::ERR_CONNECTION_REFUSED". But it says "Chsk is
+closed: will try reconnect (9)". How do we fix that?
+
+I figured it out! It was due to three problems:
+1) The Ring middleware was using a secure setup, which meant it auto-redirected to
+   HTTPS, which was not available
+2) The channel URI/endpoint was not being passed to the `make-routes` function
+3) In building the routes, the `not-found` route was put before the websocket routes.
+   Strangely, order matters when it comes to routes, like a `cond`.
+
+So now it works! Now the next thing to do is to build the UI for it.
+Committing.
+
+Sorry, haven't logged in a while. I'll fix that.
+I now have everything set up with re-frame, Sente, and Reagent. The view renders and 
+does not concern itself with the logic of what shape the data takes or event logic.
+Everything is relegated to the re-frame subs and handlers.
+
+The view is super simple:
+```
+(defn root []
+  [:div
+      [:div "Hello!"]
+      [:div [:div "Database is this:"]
+            [:div (pr-str @(subscribe [:db]))]]])
+```
+
+I have one small test dispatch which is run after the system is started:
+
+```
+(re/register-handler :test-ws-connectivity
+  (fn [db [_ send-fn]]
+    (send-fn [:event/name "Message"] 200 
+      (fn [e] (dispatch [:receive-message e])))
+    db))
+```
+
+Committing now.
