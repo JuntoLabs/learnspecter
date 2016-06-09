@@ -24,13 +24,13 @@
        :exclusions [org.json/json
                     com.fasterxml.jackson.core/jackson-core
                     commons-codec
-                    potemkin]                                   ]
-     [compojure                               "1.5.0"
-       :exclusions [clj-http]                                   ]
-     [aleph                                   "0.4.1"           ]
-     ; ==== AUTH ====
-     [ring/ring-defaults                      "0.2.0"           ]
-     [bk/ring-gzip                            "0.1.1"           ]]
+                    potemkin]                                     ]
+     [compojure                                 "1.5.0"
+       :exclusions [clj-http]                                     ]
+     [aleph                                     "0.4.1"           ]
+     ; ==== AUTH ====  
+     [ring/ring-defaults                        "0.2.0"           ]
+     [bk/ring-gzip                              "0.1.1"           ]]
    :profiles
    {:dev {:injections [] ; (clojure.main/repl :print clojure.pprint/pprint)
           :resource-paths ["dev-resources"]
