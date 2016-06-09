@@ -442,3 +442,17 @@ Backspacing works now! I had to use `pop-str`:
     (.substring ^String s 0 (-> s count dec))))
 ```
 Committing.
+
+Now I'm going to make it work in a REPLy sort of way. First it should look like
+a REPL. That is, to the left of each newline there should be a caret. Also, when
+you press enter, it should evaluate it and print the result on the right.
+We'll need two vbox divs. The left div (REPL) should have the carets.
+
+One thing I'm tired of is not having a pretty-printed database. Let's fix that
+quick.
+pprint doesn't work well :/ Switching to tables
+
+Now I have a pprint-table component which prints essentially a tree :D It's really
+useful and helpful for seeing what's going on in the db.
+
+Committing.

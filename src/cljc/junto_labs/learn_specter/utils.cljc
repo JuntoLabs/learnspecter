@@ -1,5 +1,7 @@
 (ns junto-labs.learn-specter.utils
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+   #?(:clj  [clojure.pprint :refer [pprint]]
+      :cljs [cljs.pprint    :refer [pprint]])))
 
 (defn join-once
   "Like /clojure.string/join/ but ensures no double separators."
@@ -29,3 +31,5 @@
 (defn pop-str [s]
   (when (string? s)
     (.substring ^String s 0 (-> s count dec))))
+
+(defn ppr-str [x] (with-out-str (pprint x)))
