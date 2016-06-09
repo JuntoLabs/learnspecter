@@ -56,20 +56,20 @@
     {:builds
       {:dev
         {:figwheel true
-         :source-paths ["test/cljs" "src/cljc" "dev/cljc"]
-         :compiler {:output-to            "dev-resources/public/js/compiled/quantum.js"
+         :source-paths ["src/cljc" "src/cljs" "dev/cljc" "dev/cljs"]
+         :compiler {:output-to            "dev-resources/public/js/compiled/learn-specter.js"
                     :output-dir           "dev-resources/public/js/compiled/out"
                     :optimizations        :none
-                    :main                 quantum.dev
+                    :main                 junto-labs.learn-specter.system
                     :asset-path           "js/compiled/out"
                     :source-map           true
                     :source-map-timestamp true
                     :cache-analysis       true}}
        :min
-         {:source-paths ["src/cljc" "dev/cljc"]
-          :compiler {:output-to      "dev-resources/public/js/min-compiled/quantum.js"
+         {:source-paths ["src/cljc" "src/cljs" "dev/cljc" "dev/cljs"]
+          :compiler {:output-to      "dev-resources/public/js/min-compiled/learn-specter.js"
                      :output-dir     "dev-resources/public/js/min-compiled/out"
-                     :main           quantum.dev
+                     :main           junto-labs.learn-specter.system
                      :optimizations  :advanced
                      :asset-path     "js/min-compiled/out"
                      :pretty-print   false

@@ -292,3 +292,12 @@ Fixed it — I had coded something slightly wrong in junto-labs.learn-specter.we
 so I was calling the route creators twice with different arguments.
 
 Now the server side works! Committing.
+
+Moving on to the client now.
+I'm going to develop in Figwheel so I know what the problems are along the way. Let me
+create a main namespace — system.cljs — and start Figwheel.
+
+My computer froze for about 10 minutes... *sigh*... not a problem with Figwheel, but
+with how much stuff I was running. I'm back now.
+
+Yay! Figwheel works. Committing now.
