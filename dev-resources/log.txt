@@ -1,3 +1,84 @@
 The production and local builds seem to conflict if you don't do it right. Do `lein package` and you'll be fine.
 Otherwise the JS console will print out that it can't connect to Figwheel — it thinks you're trying to
 run a local build.
+
+===== Thursday, June 9th =====
+
+Started fresh with a project.clj template from Quantum — it's tried and tested.
+
+First step is to get the Clojure side going. I'm just going to look at what I did in Quantum to
+see it as an example, but then not use 98% of it. This is just going to be super simple, after
+all.
+
+Almost done with the routing. Just realized I needed to create a utils namespace for string
+path joining, to make sure that the path was correct to the resources directory for serving
+up the index page.
+
+Added this for that purpose:
+
+```
+(defn join-once
+  "Like /clojure.string/join/ but ensures no double separators."
+  {:attribution "taoensso.encore"}
+  [separator & coll]
+  (reduce
+    (fn [s1 s2]
+      (let [s1 (str s1) s2 (str s2)]
+        (if (str/ends-with? s1 separator)
+            (if (str/starts-with? s2 separator)
+                (str s1 (.substring s2 1))
+                (str s1 s2))
+            (if (str/starts-with? s2 separator)
+                (str s1 s2)
+                (if (or (= s1 "") (= s2 ""))
+                    (str s1 s2)
+                    (str s1 separator s2))))))
+    nil
+    coll))
+```
+
+And now we have this:
+
+```
+(def separator #?(:clj  (str (java.io.File/separatorChar))
+                  :cljs "/"))
+
+
+(defn ->path [& xs]
+  (apply join-once separator xs))
+```
+
+which should give us what we want.
+
+All right, so we have the routes:
+
+```
+(defroutes app-routes
+  (GET "/"        req (fn [req]
+                        {:headers {"Content-Type" "text/html"}
+                         :body    (main-page)})) ; TODO make so it intelligently caches
+  (GET  chan-uri  req (let [get-f @ring-ajax-get-or-ws-handshake]
+                        (assert (nnil? get-f))
+                        (get-f req)))
+  (POST chan-uri  req (let [post-f @ring-ajax-post]
+                        (assert (nnil? post-f))
+                        (post-f req)))
+  (not-found not-found-page))
+```
+
+And the simple middleware which makes AJAX websocket emulation (fallback) work
+and also addresses tangential concerns such as security:
+```
+(defn wrap-middleware [routes]
+  (-> routes
+      (defaults/wrap-defaults
+        (-> defaults/secure-site-defaults
+            (assoc-in [:security :anti-forgery] false)
+            (assoc-in [:static   :resources   ] false)
+            (assoc-in [:static   :files       ] false)))))
+
+(defroutes routes (wrap-middleware routes*))
+```
+
+Next we have to create websockets using the component framework.
+Committing to a branch now.
