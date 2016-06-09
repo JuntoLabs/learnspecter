@@ -420,3 +420,25 @@ Committing.
 Now we have multiple editable areas! Cool. This editable-component is reusable.
 
 Committing.
+
+One thing is that pressing backspace, unlike what you'd expect, goes back to the
+previous page. We want to prevent this. Let's do that in the re-frame handler.
+
+I did a blanket .preventDefault, but then it prevented page reloads. I changed it
+to be .preventDefault only with backspace and delete:
+
+```
+(set! (-> js/document .-body .-onkeydown) ; Prevent backspace
+  #(dispatch [:key-down (ev/capture %
+                          (fn [e] (let [k (-> e :keys :key)]
+                                    (or (= k :backspace)
+                                        (= k :delete   )))))]))
+```
+
+Backspacing works now! I had to use `pop-str`:
+```
+(defn pop-str [s]
+  (when (string? s)
+    (.substring ^String s 0 (-> s count dec))))
+```
+Committing.

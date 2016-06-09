@@ -4,9 +4,6 @@
             [reagent.core  :as rx]
             [junto-labs.learn-specter.events :as ev]))
 
-(set! (-> js/document .-body .-onkeydown)
-  #(dispatch [:key-down (ev/capture %)]))
-
 (defn editable-component [id v-0]
   (let [editable (subscribe [:dom id])
         focused? (subscribe [:focused? id])

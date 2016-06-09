@@ -25,3 +25,7 @@
 
 (defn ->path [& xs]
   (apply join-once separator xs))
+
+(defn pop-str [s]
+  (when (string? s)
+    (.substring ^String s 0 (-> s count dec))))

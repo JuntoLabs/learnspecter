@@ -24,17 +24,20 @@
 (defn capture
   "Events are garbage-collected when they're passed outside of an event handler.
    This gets around that."
-  [e] ; TODO make this a record for speed 
-  {:keys  (e->key e)
-   :mouse {:button   (.-button  e)
-           :buttons  (.-buttons e)
-           :client   {:x (.-clientX   e)
-                      :y (.-clientY   e)}
-           :movement {:x (.-movementX e)
-                      :y (.-movementY e)}
-           :offset   {:x (.-offsetX   e)
-                      :y (.-offsetY   e)}
-           :page     {:x (.-pageX     e)
-                      :y (.-pageY     e)}
-           :screen   {:x (.-screenX   e)
-                      :y (.-screenY   e)}}})
+  ([e] (capture e (constantly false)))
+  ([e prevent-default-pred] ; TODO make this a Record for purposes of speed 
+    (let [captured {:keys  (e->key e)
+                    :mouse {:button   (.-button  e)
+                            :buttons  (.-buttons e)
+                            :client   {:x (.-clientX   e)
+                                       :y (.-clientY   e)}
+                            :movement {:x (.-movementX e)
+                                       :y (.-movementY e)}
+                            :offset   {:x (.-offsetX   e)
+                                       :y (.-offsetY   e)}
+                            :page     {:x (.-pageX     e)
+                                       :y (.-pageY     e)}
+                            :screen   {:x (.-screenX   e)
+                                       :y (.-screenY   e)}}}]
+    (when (prevent-default-pred captured) (.preventDefault e))
+    captured)))
