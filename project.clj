@@ -16,8 +16,10 @@
      [re-frame                                  "0.7.0"           ]
      [reagent                                   "0.5.1"
        :exclusions [org.json/json]                                ]
-     [com.taoensso/sente                        "1.8.1"           
-        :exclusions [com.taoensso/encore]                         ]
+     [com.taoensso/sente                        "1.8.1"           ]
+     [com.taoensso/timbre                       "4.3.1"           ]
+     ; ==== RESOURCES ====
+     [com.stuartsierra/component                "0.3.1"           ]
      [clj-http                                  "3.1.0"
        :exclusions [org.json/json
                     com.fasterxml.jackson.core/jackson-core

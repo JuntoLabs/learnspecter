@@ -80,5 +80,21 @@ and also addresses tangential concerns such as security:
 (defroutes routes (wrap-middleware routes*))
 ```
 
-Next we have to create websockets using the component framework.
+Next we have to create websockets using the Component framework.
 Committing to a branch now.
+
+All right, so like I said, websockets using Component. There's already a template for
+this in Quantum. Let me look at it and see what I can extract and how much I can pare
+it down for our purposes.
+
+Also, I'm thinking we should use an Aleph server. It's fast (more so overall than any
+other benchmarked server at https://github.com/ptaoussanis/clojure-web-server-benchmarks),
+it's battle-tested, and ...
+Wait... it doesn't have Sente support :/ I made an adapter for it but the PR hasn't been
+accepted yet. Guess we can use Immutant instead, which is the second best.
+
+All right, we've got the Websocket component set up for CLJ and CLJS. It abstracts all
+the details laid out in the Sente tutorials so we don't even have to think about them
+and we can just treat the websocket like any other component.
+
+Committing.
