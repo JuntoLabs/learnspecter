@@ -1,3 +1,294 @@
 The production and local builds seem to conflict if you don't do it right. Do `lein package` and you'll be fine.
 Otherwise the JS console will print out that it can't connect to Figwheel — it thinks you're trying to
 run a local build.
+
+===== Thursday, June 9th =====
+
+Started fresh with a project.clj template from Quantum — it's tried and tested.
+
+First step is to get the Clojure side going. I'm just going to look at what I did in Quantum to
+see it as an example, but then not use 98% of it. This is just going to be super simple, after
+all.
+
+Almost done with the routing. Just realized I needed to create a utils namespace for string
+path joining, to make sure that the path was correct to the resources directory for serving
+up the index page.
+
+Added this for that purpose:
+
+```
+(defn join-once
+  "Like /clojure.string/join/ but ensures no double separators."
+  {:attribution "taoensso.encore"}
+  [separator & coll]
+  (reduce
+    (fn [s1 s2]
+      (let [s1 (str s1) s2 (str s2)]
+        (if (str/ends-with? s1 separator)
+            (if (str/starts-with? s2 separator)
+                (str s1 (.substring s2 1))
+                (str s1 s2))
+            (if (str/starts-with? s2 separator)
+                (str s1 s2)
+                (if (or (= s1 "") (= s2 ""))
+                    (str s1 s2)
+                    (str s1 separator s2))))))
+    nil
+    coll))
+```
+
+And now we have this:
+
+```
+(def separator #?(:clj  (str (java.io.File/separatorChar))
+                  :cljs "/"))
+
+
+(defn ->path [& xs]
+  (apply join-once separator xs))
+```
+
+which should give us what we want.
+
+All right, so we have the routes:
+
+```
+(defroutes app-routes
+  (GET "/"        req (fn [req]
+                        {:headers {"Content-Type" "text/html"}
+                         :body    (main-page)})) ; TODO make so it intelligently caches
+  (GET  chan-uri  req (let [get-f @ring-ajax-get-or-ws-handshake]
+                        (assert (nnil? get-f))
+                        (get-f req)))
+  (POST chan-uri  req (let [post-f @ring-ajax-post]
+                        (assert (nnil? post-f))
+                        (post-f req)))
+  (not-found not-found-page))
+```
+
+And the simple middleware which makes AJAX websocket emulation (fallback) work
+and also addresses tangential concerns such as security:
+```
+(defn wrap-middleware [routes]
+  (-> routes
+      (defaults/wrap-defaults
+        (-> defaults/secure-site-defaults
+            (assoc-in [:security :anti-forgery] false)
+            (assoc-in [:static   :resources   ] false)
+            (assoc-in [:static   :files       ] false)))))
+
+(defroutes routes (wrap-middleware routes*))
+```
+
+Next we have to create websockets using the Component framework.
+Committing to a branch now.
+
+All right, so like I said, websockets using Component. There's already a template for
+this in Quantum. Let me look at it and see what I can extract and how much I can pare
+it down for our purposes.
+
+Also, I'm thinking we should use an Aleph server. It's fast (more so overall than any
+other benchmarked server at https://github.com/ptaoussanis/clojure-web-server-benchmarks),
+it's battle-tested, and ...
+Wait... it doesn't have Sente support :/ I made an adapter for it but the PR hasn't been
+accepted yet. Guess we can use Immutant instead, which is the second best.
+
+All right, we've got the Websocket component set up for CLJ and CLJS. It abstracts all
+the details laid out in the Sente tutorials so we don't even have to think about them
+and we can just treat the websocket like any other component.
+
+The code is long here because 1) usage documentation, 2) assertions, and 3) lots of
+`defrecord` fields. Thus, this is not complected and can't be split apart into more
+fundamental pieces, sadly.
+```
+(defrecord 
+  ^{:doc "A WebSocket-channel abstraction of Sente's functionality.
+
+          Creates a Sente WebSocket channel and Sente WebSocket channel
+          message router.
+
+          @chan-recv  : ChannelSocket's receive channel
+          @chan-send! : ChannelSocket's send API fn
+          @chan-state : Watchable, read-only atom
+          @packer     : Client<->server serialization format"
+    :usage '(map->ChannelSocket {:uri         "/chan"
+                                 :packer      :edn
+                                 :msg-handler my-msg-handler})}
+  ChannelSocket
+  [uri host chan chan-recv send-fn chan-state type server-type packer
+   stop-fn ajax-post-fn ajax-get-or-ws-handshake-fn msg-handler
+   connected-uids]
+  component/Lifecycle
+    (start [this]
+      (let [stop-fn-f (atom (fn []))]
+        (try
+          (log/debug "Starting channel-socket with:" this)
+           ; TODO for all these assertions, use clojure.spec!
+          (assert (string? uri) #{uri})
+          (assert (fn? msg-handler))
+          (assert (or (nil? type) (contains? #{:auto :ajax :ws} type)))
+        #?(:clj 
+          (assert (contains? #{:immutant})))
+          (assert (keyword? packer))
+
+          (let [{:keys [chsk ch-recv send-fn state] :as socket}
+                 (ws/make-channel-socket!
+                   #?(:clj (condp = server-type
+                             :immutant a-imm/sente-web-server-adapter)
+                      :cljs uri)
+                   {:type   (or type :auto)
+                    :packer (or packer :edn)
+                    #?@(:cljs
+                    [:host host])})
+                _ (reset! stop-fn-f (ws/start-chsk-router! ch-recv msg-handler))]
+            (log/debug "Channel-socket started.")
+            (assoc this
+              :chan                        chsk
+              :chan-recv                   ch-recv
+              :send-fn                     send-fn
+              :chan-state                  state
+              :stop-fn                     @stop-fn-f
+              :ajax-post-fn                (:ajax-post-fn                socket)
+              :ajax-get-or-ws-handshake-fn (:ajax-get-or-ws-handshake-fn socket)
+              :connected-uids              (:connected-uids              socket)))
+          (catch #?(:clj Throwable :cljs js/Error) e
+            (log/warn "Error in ChannelSocket:" e)
+            (@stop-fn-f)
+            (throw e)))))
+    (stop [this]
+      (try (when stop-fn (stop-fn))
+        (catch #?(:clj Throwable :cljs js/Error) e
+          (log/warn "Error in ChannelSocket:" e)))
+      ; TODO should assoc other vals as nil?
+      this))
+```
+
+Committing.
+
+Next step is to get the Immutant server in a component. Should be simple — I have
+a template in Quantum from which I will extract as little as possible.
+
+All right, here's the server component:
+
+```
+#?(:clj
+(defrecord
+  ^{:doc "A web server. Currently only the :immutant server @type is supported."}
+  Server
+  [routes server type host port ssl-port stop-fn ran]
+  component/Lifecycle
+    (start [this]
+      (let [stop-fn-f (atom (fn []))]
+        (try
+          (assert (contains? #{:immutant} type)) ; TODO use clojure.spec
+
+          (let [opts {:host     (or host     "localhost")
+                      :port     (or port     80)
+                      :ssl-port (or ssl-port 443)}
+                _ (log/debug "Launching server with options:" (assoc opts :type type))
+                server (condp = type
+                         :immutant (imm/run routes opts))
+                _ (reset! stop-fn-f
+                    (condp = type
+                      :immutant #(when server
+                                   (imm/stop server))))]
+            (log/debug "Server launched.")
+            (assoc this
+              :ran     server
+              :server  (condp = type
+                         :immutant (imm/server server))
+              :port    port
+              :stop-fn @stop-fn-f))
+        (catch Throwable e
+          (log/warn e)
+          (@stop-fn-f)
+          (throw e)))))
+    (stop [this]
+      (try
+        (condp = type
+          :immutant (stop-fn))
+        (catch Throwable e
+          (log/warn e)))
+      (assoc this
+        :stop-fn nil))))
+```
+
+Committing.
+
+Next step is to get a Component system going and test it with real inputs.
+I'm just going to do the minimum inputs required for it.
+
+So this looks pretty simple:
+```
+(def config
+  (let [host        "localhost"
+        port        80
+        server-type :immutant]
+    {:server     {:type   server-type
+                  :routes #'routes/routes
+                  :host   host
+                  :port   port}
+     :websockets {:uri         "/chan" ; TODO add this to routes
+                  :host        (str host ":" port)
+                  :server-type server-type
+                  :msg-handler handlers/event-msg-handler}}))
+```
+
+And this is the system for it:
+```
+(defonce system
+  (component/system-map
+    {:server     (server/map->Server (:server config))
+     :websockets (component/using 
+                   (ws/map->ChannelSocket (:websockets config))
+                   [:server])}))
+```
+(I didn't put in logging config yet, but that's not super important.)
+
+Next step is to integration test and see how it works all together.
+
+Oh — almost forgot. It would be nice to componentize the routes, because 1) one route
+(the "/chan" route) requires input from a config source (junto-labs.learn-specter.system)
+and the `server-root` for serving up the index.html requires the same thing. I've never]
+seen routes componentized but it seems like it could be a good idea so let's do it.
+
+Actually, let's not componentize because there's no actual lifecycle to routes; let's
+parameterize. That is, create the routes in a function which takes certain necessary
+params such as `chan-uri` and `server-root`.
+
+Added this important piece to the server component:
+
+```
+(when make-routes-fn
+  (alter-var-root routes-var (constantly (make-routes-fn this))))
+```
+
+It sets up the routes according to the `make-routes-fn` passed to the component, and
+passes to the fn the map of its key-value pairs.
+
+Also, I made the routes cleaner. There's no more atoms in there — only the routes var
+is "impure".
+
+Committing.
+
+All right, let's hook up the cleaned up routes to the components.
+
+Ah. There's apparently a way in Component to pass in the dependent component maps.
+The WebSocket component needs the Server component, so that's helpful. I needed that
+in order to pass the necessary config into the make-routes functions.
+
+Okay, they're all hooked up! Let's test it all together.
+
+Success! Everything compiles as expected. Running the system now.
+
+Failed on trying to bind to port 80 because wasn't in sudo mode. Let's not use port 80
+and use 8080 instead (ports below a certain range can't be bound unless in sudo mode).
+
+Hmm... keeps failing on binding port even at port 32000 (significantly higher than 80
+or even 8080). Maybe it's because it thinks I want an SSL port? Testing.
+
+Yup! That was it. Now there's an assertion failed for `(fn? msg-handler)`.
+Fixed it — I had coded something slightly wrong in junto-labs.learn-specter.websockets
+so I was calling the route creators twice with different arguments.
+
+Now the server side works! Committing.
