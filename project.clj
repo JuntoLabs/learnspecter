@@ -9,18 +9,23 @@
   :dependencies
     [[org.clojure/clojure                       "1.9.0-alpha5"]
      [org.clojure/clojurescript                 "1.9.36"      ]
-     ; ==== NAMESPACE ====
-     [org.clojure/tools.namespace               "0.2.11"      ]
      [org.clojure/core.async                    "0.2.374"     ]
-     [re-frame                                  "0.7.0"       ]
+     [com.rpl/specter                           "0.11.2"      ]
+     ; ==== WORKFLOW ====
+     [org.clojure/tools.namespace               "0.2.11"      ]
+     ; ==== VIEW ====
+     [garden                                    "1.3.2"       ]
      [reagent                                   "0.5.1"
        :exclusions [org.json/json]                            ]
+     ; ==== COMMUNICATION ====
      [com.taoensso/sente                        "1.8.1"       ]
+     ; ==== LOGGING ====
      [com.taoensso/timbre                       "4.3.1"       ]
-     [clj-http                                  "3.1.0"       ]
      ; ==== RESOURCES ====
      [com.stuartsierra/component                "0.3.1"       ]
      [environ                                   "1.0.3"       ]
+     ; ==== EVENT DISPATCH ====
+     [re-frame                                  "0.7.0"       ]
      ; ==== SERVER ====
      [compojure                                 "1.5.0"       ]
      [http-kit                                  "2.1.19"      ] 

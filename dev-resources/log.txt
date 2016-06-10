@@ -350,3 +350,131 @@ I have one small test dispatch which is run after the system is started:
 ```
 
 Committing now.
+
+What to do next? Work on creating a REPL in Reagent.
+Shouldn't be *too* hard.
+I'm thinking this:
+- First of all, no textareas. We learned the hard way what a pain those are. Best
+to stick to divs.
+- Every time enter is pressed, the string on the line is sent off to the server,
+where it is evaluated. Granted, it's not a CLJS REPL, but that's fine. 1) CLJS
+doesn't have `eval` anyway, and 2) we'll be using macros which CLJS can't handle
+on the fly either. So either way, it'll be server-side eval.
+- We're not focusing on security right now. Just getting it through to the server
+via Sente for evaluation.
+- I'm thinking of having, instead of a traditional REPL, the input on the left
+and the results on the right associated with them. Let's try that now, without
+server-side evaluation yet.
+
+All right, in order to deal with these events, I'm going to pull in these three
+functions from a different project:
+
+```
+(def ev #(-> % .-target .-value))
+
+(def num->key
+  {8  :backspace
+   32 :space
+   13 :enter
+   38 :up
+   40 :down
+   37 :left
+   39 :right})
+
+(defn e->key
+  "Gets the key from a key event."
+  {:possible-output `{:key :enter, :modifiers #{:alt}}}
+  [e]
+  (let [n (or (.-keyCode e) (.-which e))]
+    {:key (get num->key n n)
+     :modifiers (disj (hash-set (when (.-altKey e) :alt)) nil)}))
+```
+
+That way we can use modifiers and such as needed.
+
+Oh, and the dynamic CSS would be nice too, for purposes of vbox, hbox, and such.
+Let's pull in that.
+Committing.
+
+Now that that's done, how do we make it so when we click on a DOM element, that's
+the element that gets the "focus" and then responds to inputs accordingly?
+One idea is to:
+- Have a key listener attached to the entire body
+- On click of focusable elements, store the in-focus-element's ID
+- Whenever a key is pressed, a re-frame dispatch is made to the focused ID's handler,
+which changes its value accordingly.
+Let's do that.
+
+Also, one thing we need to do is "capture" events. That is, we need to prevent
+them from being garbage-collected when they're passed out of an event handler.
+Let's write that function and keep it simple.
+
+All right, it's done. Let's move on to implementing what we talked about up above.
+
+Yay! We have our editable div without resorting to labeling it as "editable" or some
+such hacky thing. Also we've avoid textareas and inputs entirely. Now, as to whether
+this is a good idea, time will tell — but for now it looks like we're in the clear.
+
+Committing.
+
+Now we have multiple editable areas! Cool. This editable-component is reusable.
+
+Committing.
+
+One thing is that pressing backspace, unlike what you'd expect, goes back to the
+previous page. We want to prevent this. Let's do that in the re-frame handler.
+
+I did a blanket .preventDefault, but then it prevented page reloads. I changed it
+to be .preventDefault only with backspace and delete:
+
+```
+(set! (-> js/document .-body .-onkeydown) ; Prevent backspace
+  #(dispatch [:key-down (ev/capture %
+                          (fn [e] (let [k (-> e :keys :key)]
+                                    (or (= k :backspace)
+                                        (= k :delete   )))))]))
+```
+
+Backspacing works now! I had to use `pop-str`:
+```
+(defn pop-str [s]
+  (when (string? s)
+    (.substring ^String s 0 (-> s count dec))))
+```
+Committing.
+
+Now I'm going to make it work in a REPLy sort of way. First it should look like
+a REPL. That is, to the left of each newline there should be a caret. Also, when
+you press enter, it should evaluate it and print the result on the right.
+We'll need two vbox divs. The left div (REPL) should have the carets.
+
+One thing I'm tired of is not having a pretty-printed database. Let's fix that
+quick.
+pprint doesn't work well :/ Switching to tables
+
+Now I have a pprint-table component which prints essentially a tree :D It's really
+useful and helpful for seeing what's going on in the db.
+
+Committing.
+
+What if we started out with a table for the repl? Let's try it.
+It's working so far with the evaluation on the right and the original on the left.
+
+Committing.
+
+Next step, before getting multiple REPL lines working, is to get eval working on
+the server.
+
+For this, I envision a Sente handler on the server which gets a :str/eval message.
+The server then evaluates it and sends the pretty-printed string back.
+Let's do it.
+
+We have a REPL now! Added the handler on the server, caught and printed exceptions,
+and it looks pretty decent!
+
+Committing.
+
+Now I need to make selected items look selected.
+
+I had an annoying time trying to get the proportions of the REPL components right.
+Moral of the story: don't use tables; always prefer flexboxes.

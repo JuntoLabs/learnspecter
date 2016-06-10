@@ -11,7 +11,7 @@
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
   (let [session (:session ring-req)
         uid     (:uid     session)]
-    (log/warn "Unhandled event:" ev-msg "from" uid)
+    (log/warn "Unhandled event" id "from" uid ":" ev-msg)
     
     (when ?reply-fn
       (?reply-fn {:unhandled-event event}))))

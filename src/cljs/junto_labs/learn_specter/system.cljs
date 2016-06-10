@@ -8,9 +8,13 @@
     [junto-labs.learn-specter.state       :as state    ]
     [junto-labs.learn-specter.subs                     ]
     [junto-labs.learn-specter.dispatches               ]
+    [junto-labs.learn-specter.styles      :as styles
+      :refer [styles]                                  ]
     [reagent.core                         :as rx       ]
     [re-frame.core                        :as re
-      :refer [dispatch]])
+      :refer [dispatch]                                ]
+    [garden.core
+      :refer [css]                                     ])
   (:require-macros
     [taoensso.timbre :as log]))
 
@@ -28,6 +32,7 @@
 (defonce system (atom system-map))
 
 (defn render! []
+  (styles/replace-css-at! "dynamic" (css styles))
   (let [dom-root (or (.getElementById js/document "root") ; was failing until this
                      (doto (.createElement js/document "div")
                            (-> .-id (set! "root"))
@@ -40,10 +45,7 @@
   (swap! system component/start)
   (log/debug "System started.")
   (render!)
+  (dispatch [:set-ws-fn (-> @system :websockets :send-fn)])
   (log/debug "View rendered."))
 
-(defn tests [system]
-  (dispatch [:test-ws-connectivity (-> system :websockets :send-fn)]))
-
 (-main)
-(tests @system)

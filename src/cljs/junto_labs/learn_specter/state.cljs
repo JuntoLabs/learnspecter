@@ -4,6 +4,7 @@
                 :refer [dispatch]                        ]
               [junto-labs.learn-specter.dispatches       ]))
 
-(def state-0 {:messages []})
+(def state-0 {:dom           {}
+              :evaled        []})
 
-(dispatch [:reset state-0])
+(defonce init-state! (dispatch [:reset state-0]))
