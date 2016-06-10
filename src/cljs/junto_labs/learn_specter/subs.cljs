@@ -17,3 +17,9 @@
 (re/register-sub :dom
   (fn [db [_ id]]
     (reaction (get-in @db [:dom id]))))
+
+(re/register-sub :evaled
+  (fn [db [_ i]]
+    (if (nil? i)
+        (reaction (get @db :evaled))
+        (reaction (get-in @db [:evaled i])))))

@@ -33,3 +33,7 @@
     (.substring ^String s 0 (-> s count dec))))
 
 (defn ppr-str [x] (with-out-str (pprint x)))
+
+(defn into*
+  ([a b] (into a b))
+  ([a b c & args] (reduce into a (apply list b c args))))

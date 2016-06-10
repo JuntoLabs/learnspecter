@@ -37,25 +37,27 @@
   (fn [db [_ id v]]
     (assoc-in db [:dom id] v)))
 
-(defn eval-on-server! [db x to-id]
+(re/register-handler :add-evaled
+  (fn [db [_ to-eval-str [success? evaled-str]]]
+    (update db :evaled conj [to-eval-str success? evaled-str])))
+
+(defn eval-on-server! [db x]
   ((get db :ws-fn) [:str/eval x] 5000
     (fn [evaled]
       (log/debug "Evaled on server!" evaled)
-      (dispatch [:dom to-id evaled]))))
+      (dispatch [:add-evaled x evaled]))))
 
 (re/register-handler :eval
   (fn [db [_ from-id to-id]]
     (eval-on-server! db
-      @(subscribe [:dom from-id])
-      to-id)
+      @(subscribe [:dom from-id]))
     (assoc-in db [:dom to-id] "Evaling...")))
 
 (def dispatch-map ; if it returns truthy, it continues with default
-  {:repl.line (fn [e] (if (-> e :keys :key (= :enter))
-                          (do (log/debug "Enter pressed!")
-                              (dispatch [:eval :repl.line :evaled])
-                              (dispatch [:add-line]))
-                          true))})
+  {:repl-line (fn [e] (condp = (-> e :keys :key)
+                        :enter (do (log/debug "Enter pressed!")
+                                   (dispatch [:eval :repl-line :evaled]))
+                        true))})
 
 ; ===== USER INTERACTION EVENTS =====
 

@@ -34,6 +34,6 @@
   [{:as ev-msg :keys [?data ?reply-fn]}]
   (when ?reply-fn
     (log/debug "Evaling" ?data "...")
-    (let [evaled (try (-> ?data read-string eval u/ppr-str)
-                   (catch Throwable t (u/ppr-str t)))]
+    (let [evaled (try [true (-> ?data read-string eval u/ppr-str)]
+                   (catch Throwable t [false (u/ppr-str t)]))]
       (?reply-fn evaled))))

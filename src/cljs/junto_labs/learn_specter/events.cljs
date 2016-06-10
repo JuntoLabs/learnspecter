@@ -4,9 +4,12 @@
 
 (def num->key
   {8  :backspace
+   9  :tab
    16 :shift
    18 :alt
-   91 :meta
+   17 :control
+   91 :meta ; left  meta
+   93 :meta ; right meta
    46 :delete
    32 :space
    13 :enter
@@ -16,7 +19,11 @@
    39 :right})
 
 (def non-printable?
-  #{:shift :meta :alt :up :down :left :right})
+  #{:shift :meta :alt :up :down :left :right :control})
+
+(def key->char
+  {:enter \newline
+   :tab   \tab})
 
 (defn e->key
   "Gets the key from a key event."
@@ -26,9 +33,7 @@
         k (get num->key n n)]
     {:key     k
      :key-str (when-not (non-printable? k)
-                (condp = k
-                  :enter \newline
-                  (.-key e)))
+                (or (key->char k) (.-key e)))
      :modifiers (disj (hash-set (when (.-altKey e) :alt)) nil)}))
 
 (defn capture

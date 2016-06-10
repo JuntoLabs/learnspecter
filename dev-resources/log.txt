@@ -473,3 +473,8 @@ We have a REPL now! Added the handler on the server, caught and printed exceptio
 and it looks pretty decent!
 
 Committing.
+
+Now I need to make selected items look selected.
+
+I had an annoying time trying to get the proportions of the REPL components right.
+Moral of the story: don't use tables; always prefer flexboxes.
