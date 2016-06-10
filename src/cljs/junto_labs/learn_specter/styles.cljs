@@ -61,17 +61,25 @@
                     :max-height    "250px"
                     :overflow-y    :scroll})]
     [reset-defaults
-     [:html :body     {:height  "100%"
-                       :width   "100%"
-                       :-webkit-font-smoothing  :antialiased
-                       :-moz-osx-font-smoothing :grayscale}]  ; disables subpixel rendering
-     [:div :h1        {:font-family "Helvetica Neue"}]
-     [:h1             {:font-size   "30px"
-                       :font-weight :bold}]
-     [:h1.title       {:padding-top   "10px" 
-                       :padding-bottom "10px"}]
-     [:pre            {:font-family "Courier"
-                       :font-size   "12px"}]
+     [:html :body      {:height  "100%"
+                        :width   "100%"
+                        :font-family "Helvetica Neue"
+                        :-webkit-font-smoothing  :antialiased
+                        :-moz-osx-font-smoothing :grayscale}]  ; disables subpixel rendering
+     [:h1              {:font-size      "30px"
+                        :font-weight    :bold
+                        :padding-top    "8px" 
+                        :padding-bottom "8px"}]
+     [:h2              {:font-size   "20px"
+                        :padding-top    "8px" 
+                        :padding-bottom "8px"}]
+     [:i               {:font-style  :italic}]
+     [:div             {:font-size   "12px"}]
+     [:pre             {:font-family "Courier"
+                        :font-size   "12px"}]
+     [:.subtitle
+       ["*" {:font-size     "14px"
+             :margin-bottom "5px"}]]
      [:.vbox           vbox]
      [:.vbox.hcenter   (merge vbox (horient :v :center ))]
      [:.vbox.vcenter   (merge hbox (vorient :v :center ))]
@@ -90,6 +98,8 @@
                          {:background-color "#e4e4e4"
                           :color            "#3E3E3E"
                           :overflow-x       :scroll})]
+     [:.evaled.success {:background-color "#01C675"
+                        :color            "#006139"}]
      [:.evaled.failure {:background-color "#F64744"
                         :color            :white}]
      [:.repl-line      {:padding-top  "2px"}]

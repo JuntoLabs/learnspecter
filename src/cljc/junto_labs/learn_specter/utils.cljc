@@ -37,3 +37,14 @@
 (defn into*
   ([a b] (into a b))
   ([a b c & args] (reduce into a (apply list b c args))))
+
+(def ffilter (comp first filter))
+
+#?(:clj (defn prewalk-find [pred x] ; can't find nil but oh well
+  (cond (try (pred x)
+          (catch Throwable _ false))
+        [true x]
+        (instance? clojure.lang.Seqable x)
+        (let [x' (ffilter #(first (prewalk-find pred %)) x)]
+          (if (nil? x') [false x'] [true x']))
+        :else [false nil])))

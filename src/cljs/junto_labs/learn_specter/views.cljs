@@ -41,7 +41,9 @@
   (let [value (subscribe [:evaled i])]
     (fn []
       (let [[_ success? evaled-str] @value]
-        [:pre.evaled {:class (if (false? success?) "evaled failure" "evaled")}
+        [:pre.evaled {:class (cond (false? success?) "evaled failure"
+                                   (true?  success?) "evaled success"
+                                   :else             "evaled")}
           evaled-str]))))
 
 (defn pr-database []
@@ -68,11 +70,48 @@
              [to-eval-editable]
              [evaled (-> @evaled-results count)]]])])))
 
+(defn separator [n]
+  (fn [] [:div {:style {:margin-bottom n}}]))
+
+(defn challenge-complete []
+  (fn []
+    [:div.vbox.hcenter
+     [:h1 "Challenge complete!"]]))
+
+(defn challenge-ongoing []
+  (fn []
+    [:div.vbox.hcenter
+      [:h2 [:i "Here is your challenge, should you choose to accept it:"]]
+      [:div.hbox.subtitle
+        [:div "Submit a function which does the following using Specter's"]
+        [:div {:style {:width 3}}]
+        [:pre "setval"]
+        [:div ":"]]
+      [:div.vbox [:pre "in  : {:ab [2 3 4]}"]
+                 [:pre "out : {:ab [2 3 4 5 6 7 8]}"]]
+      [separator 10]
+      [:div.vbox.hcenter
+        [:div.subtitle "Example:"]
+        [:pre "(fn [in] (do-things ... (setval ...) in ... ))"]]
+      [separator 10]]))
+
+(defn challenge []
+  (let [success? (subscribe [:success?])]
+    (fn []
+      (if @success?
+          [challenge-complete]
+          [challenge-ongoing]))))
+
+(defn correct []
+  (fn []
+    ))
+
 (defn root []
   (dispatch [:focus :repl-line])
   [:div#inner-root.vbox.hstretch
     [:div.hbox.hcenter [:h1.title "Welcome to the REPL!"]]
     [repl]
+    [challenge]
   #_[:div.vbox
       [:h2 "Database"] ; TODO hide button
       [pr-database]]])  

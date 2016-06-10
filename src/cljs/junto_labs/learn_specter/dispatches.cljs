@@ -33,10 +33,11 @@
 
 (re/register-handler :add-evaled
   (fn [db [_ to-eval-str [success? evaled-str]]]
-    (update db :evaled conj [to-eval-str success? evaled-str])))
+    (-> db (update :evaled conj [to-eval-str success? evaled-str])
+           (assoc  :success? success?))))
 
 (defn eval-on-server! [db x]
-  ((get db :ws-fn) [:str/eval x] 5000
+  ((get db :ws-fn) [:challenge/specter-1 x] 5000
     (fn [evaled]
       (log/debug "Evaled on server!" evaled)
       (dispatch [:add-evaled x evaled]))))

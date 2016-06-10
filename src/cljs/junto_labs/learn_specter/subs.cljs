@@ -48,3 +48,7 @@
 
 (defn history-value [db]
   (let [[v _ _] (history-item db)] v))
+
+(re/register-sub :success?
+  (fn [db _]
+    (reaction (:success? @db))))
