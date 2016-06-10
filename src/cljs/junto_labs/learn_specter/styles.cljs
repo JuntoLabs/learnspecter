@@ -59,7 +59,6 @@
                     :width         (str "calc(" percent "% - 6px - 10px)")
                     :min-height    "20px"
                     :max-height    "250px"
-                    :overflow-x    :scroll
                     :overflow-y    :scroll})]
     [reset-defaults
      [:html :body     {:height  "100%"
@@ -85,10 +84,12 @@
      [:.focused        {:border-style :solid
                         :border-color :gray
                         :border-width "1px"}]
-     [:.to-eval        (repl-box 30)]
+     [:.to-eval        (merge (repl-box 30)
+                         {:white-space :pre-wrap})]
      [:.evaled         (merge (repl-box 70)
                          {:background-color "#e4e4e4"
-                          :color            "#3E3E3E"})]
+                          :color            "#3E3E3E"
+                          :overflow-x       :scroll})]
      [:.evaled.failure {:background-color "#F64744"
                         :color            :white}]
      [:.repl-line      {:padding-top  "2px"}]

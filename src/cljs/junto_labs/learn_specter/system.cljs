@@ -48,8 +48,4 @@
   (dispatch [:set-ws-fn (-> @system :websockets :send-fn)])
   (log/debug "View rendered."))
 
-(defn tests [system]
-  (dispatch [:test-ws-connectivity]))
-
 (-main)
-(tests @system)

@@ -4,21 +4,32 @@
             [reagent.core  :as rx]
             [junto-labs.learn-specter.utils  :as u ]
             [junto-labs.learn-specter.events :as ev]
-            [junto-labs.learn-specter.components :as comp]))
+            [junto-labs.learn-specter.components :as comp])
+  (:require-macros
+    [taoensso.timbre    :as log]))
 
-(defn editable-component [tag id & [style v-0]]
-  (let [value    (subscribe [:dom id])
+(defn to-eval-editable []
+  (let [id       :repl-line
+        value    (subscribe [:dom id])
         focused? (subscribe [:focused? id])
-        _ (dispatch [:dom id v-0])] ; Set initial value
+        history-index (subscribe [:history-index])
+        history-item  (subscribe [:history-item ])]
     (fn []
-      [tag
-        {:id id
-         :style style
-         :class (if @focused?
-                    "focused editable"
-                    "editable")
-         :on-click #(dispatch [:focus id])}
-        @value])))
+      (log/debug "history-index" @history-index)
+      (let [[history-value _ _] @history-item]
+        (log/debug "history-value"  history-value)
+        (log/debug "value" "for" id @value)
+        (log/debug "What should be looking" (if history-index
+              history-value
+              @value))
+        [:pre.to-eval
+          {:id       id
+           :style    {:min-height 14}
+           :class    (if @focused?
+                         "focused editable"
+                         "editable")
+           :on-click #(dispatch [:focus id])}
+          (or history-value @value)]))))
 
 (defn to-eval [i]
   (let [value (subscribe [:evaled i])]
@@ -34,10 +45,8 @@
           evaled-str]))))
 
 (defn pr-database []
-  [:div (u/ppr-str @(subscribe [:db]))]
-  #_(comp/pr-table @(subscribe [:db])))
-
-
+  #_[:div (u/ppr-str @(subscribe [:db]))]
+  (comp/pr-table @(subscribe [:db])))
 
 (defn caret []
   [:div.vbox.vcenter.caret [:pre {:style {:padding-top 2}} ">"]])
@@ -45,6 +54,7 @@
 (defn repl []
   (let [evaled-results (subscribe [:evaled])]
     (fn []
+      (dispatch [:scroll-to-bottom-of-page])    
       [:div#container.hbox
         (u/into*
           [:div#repl.vbox {:style {:flex-grow 0 :overflow-x :hidden :min-width "100%"}}]
@@ -55,7 +65,7 @@
               [evaled i]])
           [[:div.hbox.repl-line
              [:div.vbox.vcenter.caret [:pre {:style {:padding-top 6}} ">"]]
-             [editable-component :pre.to-eval :repl-line {:min-height 14}]
+             [to-eval-editable]
              [evaled (-> @evaled-results count)]]])])))
 
 (defn root []
@@ -63,6 +73,6 @@
   [:div#inner-root.vbox.hstretch
     [:div.hbox.hcenter [:h1.title "Welcome to the REPL!"]]
     [repl]
- #_[:div.vbox
+  #_[:div.vbox
       [:h2 "Database"] ; TODO hide button
       [pr-database]]])  
